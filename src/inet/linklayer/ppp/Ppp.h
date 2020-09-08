@@ -51,6 +51,7 @@ class INET_API Ppp : public MacProtocolBase, public queueing::IActivePacketSink
     virtual void decapsulate(Packet *packet);
     virtual void refreshDisplay() const override;
     virtual void refreshOutGateConnection(bool connected);
+    virtual void abortCurrenTransmission();
 
     // cListener function
     virtual void receiveSignal(cComponent *source, simsignal_t signalID, cObject *obj, cObject *details) override;
@@ -64,6 +65,7 @@ class INET_API Ppp : public MacProtocolBase, public queueing::IActivePacketSink
   protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
     virtual void initialize(int stage) override;
+    virtual void finish() override;
     virtual void handleMessageWhenUp(cMessage *message) override;
     virtual void handleSelfMessage(cMessage *message) override;
     virtual void handleUpperPacket(Packet *packet) override;
