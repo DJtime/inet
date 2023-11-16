@@ -20,6 +20,8 @@
 #include "inet/networklayer/common/NetworkInterface.h"
 #include "inet/physicallayer/wired/ethernet/EthernetPhyHeader_m.h"
 
+// #define GPTP_ORIG
+
 namespace inet {
 
 Define_Module(Gptp);
@@ -257,25 +259,38 @@ void Gptp::sendSync()
     // The sendFollowUp(portId) called by receiveSignal(), when GptpSync sent
 }
 
-void Gptp::sendFollowUp(int portId, const GptpSync *sync, clocktime_t preciseOriginTimestamp)
+void Gptp::sendFollowUp(int portId, const GptpSync *sync, clocktime_t syncTxEndTimestamp)
 {
     auto packet = new Packet("GptpFollowUp");
     packet->addTag<MacAddressReq>()->setDestAddress(GPTP_MULTICAST_ADDRESS);
     auto gptp = makeShared<GptpFollowUp>();
     gptp->setDomainNumber(domainNumber);
-    gptp->setPreciseOriginTimestamp(preciseOriginTimestamp);
+#ifdef GPTP_ORIG
+    gptp->setPreciseOriginTimestamp(syncTxEndTimestamp);
+#else
+    gptp->setPreciseOriginTimestamp(originTimestamp);
+#endif
     gptp->setSequenceId(sync->getSequenceId());
 
-    if (gptpNodeType == MASTER_NODE)
+    if (gptpNodeType == MASTER_NODE) {
+#ifdef GPTP_ORIG
         gptp->setCorrectionField(CLOCKTIME_ZERO);
+#else
+        gptp->setCorrectionField(syncTxEndTimestamp - originTimestamp);
+#endif
+    }
     else if (gptpNodeType == BRIDGE_NODE)
     {
         /**************** Correction field calculation *********************************************
          * It is calculated by adding peer delay, residence time and packet transmission time      *
          * correctionField(i)=correctionField(i-1)+peerDelay+(timeReceivedSync-timeSentSync)*(1-f) *
          *******************************************************************************************/
-        // gptp->setCorrectionField(correctionField + peerDelay + sentTimeSyncSync - receivedTimeSync);  // TODO revise it!!! see prev. comment, where is the (1-f),  ???
-        gptp->setCorrectionField(CLOCKTIME_ZERO);  // TODO revise it!!! see prev. comment, where is the (1-f),  ???
+#ifdef GPTP_ORIG
+        gptp->setCorrectionField(CLOCKTIME_ZERO);
+#else
+//        gptp->setCorrectionField(correctionField + peerDelay + syncTxEndTimestamp - receivedTimeSync);
+        gptp->setCorrectionField(syncTxEndTimestamp - originTimestamp);
+#endif
     }
     gptp->getFollowUpInformationTLVForUpdate().setRateRatio(gmRateRatio);
     packet->insertAtFront(gptp);
@@ -356,9 +371,13 @@ void Gptp::processFollowUp(Packet *packet, const GptpFollowUp* gptp)
         return;
     }
 
-
-    peerSentTimeSync = gptp->getPreciseOriginTimestamp();
+    originTimestamp = gptp->getPreciseOriginTimestamp();
     correctionField = gptp->getCorrectionField();
+#ifdef GPTP_ORIG
+    peerSentTimeSync = gptp->getPreciseOriginTimestamp();
+#else
+    peerSentTimeSync = gptp->getPreciseOriginTimestamp() + gptp->getCorrectionField();
+#endif
     receivedRateRatio = gptp->getFollowUpInformationTLV().getRateRatio();
 
     synchronize();
@@ -368,6 +387,8 @@ void Gptp::processFollowUp(Packet *packet, const GptpFollowUp* gptp)
     EV_INFO << "ORIGIN TIME SYNC         - " << originTimestamp << endl;
     EV_INFO << "CORRECTION FIELD         - " << correctionField << endl;
     EV_INFO << "PROPAGATION DELAY        - " << peerDelay << endl;
+    EV_INFO << "peerSentTimeSync         - " << peerSentTimeSync << endl;
+    EV_INFO << "receivedRateRatio        - " << receivedRateRatio << endl;
 
     rcvdGptpSync = false;
 }
@@ -384,7 +405,7 @@ void Gptp::synchronize()
      * Local time is adjusted using peer delay, correction field, residence time *
      * and packet transmission time based departure time of Sync message from GM *
      *****************************************************************************/
-    clocktime_t newTime = peerSentTimeSync + peerDelay + correctionField + residenceTime;
+    clocktime_t newTime = originTimestamp + correctionField + peerDelay + residenceTime;
 
     ASSERT(gptpNodeType != MASTER_NODE);
 
@@ -398,7 +419,6 @@ void Gptp::synchronize()
     ppm newOscillatorCompensation = unit(gmRateRatio * (1 + unit(settableClock->getOscillatorCompensation()).get()) - 1);
     settableClock->setClockTime(newTime, newOscillatorCompensation, true);
 
-    oldPeerSentTimeSync = peerSentTimeSync;
     oldLocalTimeAtTimeSync = origNow;
     newLocalTimeAtTimeSync = clock->getClockTime();
     receivedTimeSync = syncIngressTimestamp;
@@ -412,14 +432,18 @@ void Gptp::synchronize()
      ***************************************************************************/
 
     EV_INFO << "############## SYNC #####################################"<< endl;
-    EV_INFO << "RECEIVED TIME AFTER SYNC   - " << newLocalTimeAtTimeSync << endl;
-    EV_INFO << "RECEIVED SIM TIME          - " << now << endl;
+    EV_INFO << "LOCAL TIME BEFORE SYNC     - " << oldLocalTimeAtTimeSync << endl;
+    EV_INFO << "LOCAL TIME AFTER SYNC      - " << newLocalTimeAtTimeSync << endl;
+    EV_INFO << "CURRENT SIMTIME            - " << now << endl;
     EV_INFO << "ORIGIN TIME SYNC           - " << peerSentTimeSync << endl;
+    EV_INFO << "PREV ORIGIN TIME SYNC      - " << oldPeerSentTimeSync << endl;
     EV_INFO << "RESIDENCE TIME             - " << residenceTime << endl;
     EV_INFO << "CORRECTION FIELD           - " << correctionField << endl;
     EV_INFO << "PROPAGATION DELAY          - " << peerDelay << endl;
     EV_INFO << "TIME DIFFERENCE TO SIMTIME - " << CLOCKTIME_AS_SIMTIME(newLocalTimeAtTimeSync) - now << endl;
-    EV_INFO << "RATE RATIO                 - " << gmRateRatio << endl;
+    EV_INFO << "GM RATE RATIO              - " << gmRateRatio << endl;
+
+    oldPeerSentTimeSync = peerSentTimeSync;
 
     emit(rateRatioSignal, gmRateRatio);
     emit(localTimeSignal, CLOCKTIME_AS_SIMTIME(newLocalTimeAtTimeSync));
