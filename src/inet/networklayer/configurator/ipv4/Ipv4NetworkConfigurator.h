@@ -14,7 +14,7 @@
 #include "inet/networklayer/configurator/base/L3NetworkConfiguratorBase.h"
 #include "inet/networklayer/contract/IInterfaceTable.h"
 #include "inet/networklayer/contract/ipv4/Ipv4Address.h"
-#include "inet/networklayer/ipv4/IIpv4RoutingTable.h"
+#include "inet/networklayer/ipv4/Ipv4RoutingTable.h"
 #include "inet/networklayer/ipv4/Ipv4InterfaceData.h"
 
 namespace inet {
@@ -147,12 +147,12 @@ class INET_API Ipv4NetworkConfigurator : public L3NetworkConfiguratorBase
     /**
      * Configures the provided routing table based on the current network configuration.
      */
-    virtual void configureRoutingTable(IIpv4RoutingTable *routingTable);
+    virtual void configureRoutingTable(Ipv4RoutingTable *routingTable);
 
     /**
      * Configures the provided routing table based on the current network configuration for specified networkInterface.
      */
-    virtual void configureRoutingTable(IIpv4RoutingTable *routingTable, NetworkInterface *networkInterface);
+    virtual void configureRoutingTable(Ipv4RoutingTable *routingTable, NetworkInterface *networkInterface);
 
   protected:
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }

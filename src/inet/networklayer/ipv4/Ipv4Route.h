@@ -14,17 +14,17 @@
 namespace inet {
 
 class NetworkInterface;
-class IIpv4RoutingTable;
+class Ipv4RoutingTable;
 
 /**
- * Ipv4 unicast route in IIpv4RoutingTable.
+ * Ipv4 unicast route in Ipv4RoutingTable.
  *
- * @see IIpv4RoutingTable, Ipv4RoutingTable
+ * @see Ipv4RoutingTable, Ipv4RoutingTable
  */
 class INET_API Ipv4Route : public cObject, public IRoute
 {
   private:
-    IIpv4RoutingTable *rt; ///< the routing table in which this route is inserted, or nullptr
+    Ipv4RoutingTable *rt; ///< the routing table in which this route is inserted, or nullptr
     Ipv4Address dest; ///< Destination
     Ipv4Address netmask; ///< Route mask
     Ipv4Address gateway; ///< Next hop
@@ -55,8 +55,8 @@ class INET_API Ipv4Route : public cObject, public IRoute
     bool equals(const Ipv4Route& route) const;
 
     /** To be called by the routing table when this route is added or removed from it */
-    virtual void setRoutingTable(IIpv4RoutingTable *rt) { this->rt = rt; }
-    IIpv4RoutingTable *getRoutingTable() const { return rt; }
+    virtual void setRoutingTable(Ipv4RoutingTable *rt) { this->rt = rt; }
+    Ipv4RoutingTable *getRoutingTable() const { return rt; }
 
     /** test validity of route entry, e.g. check expiry */
     virtual bool isValid() const { return true; }
@@ -111,7 +111,7 @@ class INET_API Ipv4Route : public cObject, public IRoute
 };
 
 /**
- * Ipv4 multicast route in IIpv4RoutingTable.
+ * Ipv4 multicast route in Ipv4RoutingTable.
  * Multicast routing protocols may extend this class to store protocol
  * specific fields.
  *
@@ -130,12 +130,12 @@ class INET_API Ipv4Route : public cObject, public IRoute
  * routing tree), then the datagram is forwarded only if there are listeners
  * of the multicast group on that link (TRPB routing).
  *
- * @see IIpv4RoutingTable, Ipv4RoutingTable
+ * @see Ipv4RoutingTable, Ipv4RoutingTable
  */
 class INET_API Ipv4MulticastRoute : public cObject, public IMulticastRoute
 {
   private:
-    IIpv4RoutingTable *rt; ///< the routing table in which this route is inserted, or nullptr
+    Ipv4RoutingTable *rt; ///< the routing table in which this route is inserted, or nullptr
     Ipv4Address origin; ///< Source network
     Ipv4Address originNetmask; ///< Source network mask
     Ipv4Address group; ///< Multicast group, if unspecified then matches any
@@ -164,8 +164,8 @@ class INET_API Ipv4MulticastRoute : public cObject, public IMulticastRoute
     virtual std::string detailedInfo() const;
 
     /** To be called by the routing table when this route is added or removed from it */
-    virtual void setRoutingTable(IIpv4RoutingTable *rt) { this->rt = rt; }
-    IIpv4RoutingTable *getRoutingTable() const { return rt; }
+    virtual void setRoutingTable(Ipv4RoutingTable *rt) { this->rt = rt; }
+    Ipv4RoutingTable *getRoutingTable() const { return rt; }
 
     /** test validity of route entry, e.g. check expiry */
     virtual bool isValid() const { return true; }

@@ -13,7 +13,7 @@
 #include "inet/common/lifecycle/NodeStatus.h"
 #include "inet/networklayer/configurator/ipv4/Ipv4NetworkConfigurator.h"
 #include "inet/networklayer/contract/IInterfaceTable.h"
-#include "inet/networklayer/ipv4/IIpv4RoutingTable.h"
+#include "inet/networklayer/ipv4/Ipv4RoutingTable.h"
 
 namespace inet {
 
@@ -28,7 +28,7 @@ class INET_API Ipv4NodeConfigurator : public cSimpleModule, public ILifecycle, p
   protected:
     opp_component_ptr<NodeStatus> nodeStatus;
     ModuleRefByPar<IInterfaceTable> interfaceTable;
-    ModuleRefByPar<IIpv4RoutingTable> routingTable;
+    ModuleRefByPar<Ipv4RoutingTable> routingTable;
     ModuleRefByPar<Ipv4NetworkConfigurator> networkConfigurator;
 
   public:

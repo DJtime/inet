@@ -116,7 +116,7 @@ void RoutingTableVisualizerBase::receiveSignal(cComponent *source, simsignal_t s
     Enter_Method("%s", cComponent::getSignalName(signal));
 
     if (signal == routeAddedSignal || signal == routeDeletedSignal || signal == routeChangedSignal) {
-        auto routingTable = check_and_cast<IIpv4RoutingTable *>(source);
+        auto routingTable = check_and_cast<Ipv4RoutingTable *>(source);
         auto networkNode = getContainingNode(check_and_cast<cModule *>(source));
         if (nodeFilter.matches(networkNode))
             updateRouteVisualizations(networkNode, routingTable);
@@ -176,7 +176,7 @@ std::vector<Ipv4Address> RoutingTableVisualizerBase::getDestinations()
     return destinations;
 }
 
-void RoutingTableVisualizerBase::addRouteVisualizations(cModule *node, IIpv4RoutingTable *routingTable)
+void RoutingTableVisualizerBase::addRouteVisualizations(cModule *node, Ipv4RoutingTable *routingTable)
 {
     L3AddressResolver addressResolver;
     auto interfaceTable = addressResolver.findInterfaceTableOf(node);
@@ -200,7 +200,7 @@ void RoutingTableVisualizerBase::addRouteVisualizations(cModule *node, IIpv4Rout
     }
 }
 
-void RoutingTableVisualizerBase::removeRouteVisualizations(cModule *networkNode, IIpv4RoutingTable *routingTable)
+void RoutingTableVisualizerBase::removeRouteVisualizations(cModule *networkNode, Ipv4RoutingTable *routingTable)
 {
     std::vector<const RouteVisualization *> removedRouteVisualizations;
     for (auto it : routeVisualizations)
@@ -223,7 +223,7 @@ void RoutingTableVisualizerBase::removeAllRouteVisualizations()
     }
 }
 
-void RoutingTableVisualizerBase::updateRouteVisualizations(cModule *networkNode, IIpv4RoutingTable *routingTable)
+void RoutingTableVisualizerBase::updateRouteVisualizations(cModule *networkNode, Ipv4RoutingTable *routingTable)
 {
     removeRouteVisualizations(networkNode, routingTable);
     addRouteVisualizations(networkNode, routingTable);
