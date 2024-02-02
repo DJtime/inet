@@ -1,3 +1,7 @@
+elbit
+ - datagram local out send to all multicast interfaces
+ - make it work for different RIP/PIM timing parameters
+
 INET 4.5 release
 ================
 
